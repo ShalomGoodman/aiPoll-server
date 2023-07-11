@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -35,35 +36,40 @@ class Poll(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     winner = models.CharField(max_length=1, choices=Option.choices, null=True, blank=True)
     voting_status = models.CharField(max_length=10, choices=VOTING_STATUS_CHOICES, default='open')
-    duration_minutes = models.IntegerField()
-    
+    deadline = models.DateTimeField()
+
     def __str__(self):
         return self.title
     
     def get_total_votes(self):
         return self.option_a_votes + self.option_b_votes
     
-    def get_percentage(self, option):
-        if option == 'a':
-            return round(self.option_a_votes / self.get_total_votes() * 100)
-        elif option == 'b':
-            return round(self.option_b_votes / self.get_total_votes() * 100)
-        else:
+    def get_percentage(self):
+        total_votes = self.get_total_votes()
+        if total_votes == 0:
             return 0
+        else:
+            response = [
+                round(self.option_a_votes / total_votes * 100),
+                round(self.option_b_votes / total_votes * 100)
+            ]
+            return response
         
-    def get_winner(self):
-        if self.duration_minutes == 0:
+    def update_winner(self):
+        if timezone.now() >= self.deadline:
             if self.option_a_votes > self.option_b_votes:
                 self.winner = 'a'
             elif self.option_b_votes > self.option_a_votes:
                 self.winner = 'b'
+            self.save()
                 
-    def get_voting_status(self):
-        if self.duration_minutes > 0:
-            self.voting_status = 'open'
-        else:
+    def update_voting_status(self):
+        if timezone.now() >= self.deadline:
             self.voting_status = 'closed'
-    
+            self.save()
+        else:
+            self.voting_status = 'open'
+            self.save()
         
         
 class Comment(models.Model):
