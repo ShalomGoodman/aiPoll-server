@@ -43,11 +43,13 @@ class ChatboxSerializer(serializers.ModelSerializer):
 
 class PollSerializer(serializers.ModelSerializer):
     user = serializers.SerializerMethodField()
-    
+    total_votes = serializers.SerializerMethodField()
+    percentages = serializers.SerializerMethodField()
+    voting_status = serializers.SerializerMethodField()
+
     class Meta:
         model = Poll
         fields = '__all__'
-        
         
     def create(self, validated_data):
         validated_data['creator'] = self.context['request'].user
@@ -55,3 +57,13 @@ class PollSerializer(serializers.ModelSerializer):
 
     def get_user(self, obj):
         return obj.creator.username
+
+    def get_total_votes(self, obj):
+        return obj.get_total_votes()
+
+    def get_percentages(self, obj):
+        return obj.get_percentage()
+
+    def get_voting_status(self, obj):
+        obj.update_voting_status()
+        return obj.voting_status
