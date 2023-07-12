@@ -69,7 +69,7 @@ class PollViewSet(viewsets.ModelViewSet):
     def vote(self, request, pk=None):
         poll = self.get_object()
         option = request.data.get('option')
-        if poll.voting_status == 'closed' or timezone.now() >= poll.deadline or poll.creator == request.user:
+        if poll.voting_status == 'closed':
             return Response({'detail': 'You cannot vote.'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             if option == 'a':
