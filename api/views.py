@@ -108,6 +108,7 @@ class ChatboxViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         comments = instance.comments.all()
+        # pk = self.kwargs.get('pk')
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
 

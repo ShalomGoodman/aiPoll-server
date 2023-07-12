@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from .models import Poll, Comment, Chatbox, UserProfile
+import uuid
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,6 +43,7 @@ class ChatboxSerializer(serializers.ModelSerializer):
         fields = ['chatbox_id', 'comments']
 
 class PollSerializer(serializers.ModelSerializer):
+    chatbox = serializers.PrimaryKeyRelatedField(read_only=True)
     user = serializers.SerializerMethodField()
     total_votes = serializers.SerializerMethodField()
     percentages = serializers.SerializerMethodField()
@@ -53,7 +55,10 @@ class PollSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         validated_data['creator'] = self.context['request'].user
-        return super(PollSerializer, self).create(validated_data)
+        chatbox_id = str(uuid.uuid4())  # Generate a new UUID
+        chatbox = Chatbox.objects.create(chatbox_id=chatbox_id)  # Create a new Chatbox with this ID
+        poll = Poll.objects.create(chatbox=chatbox, **validated_data)  # Create the Poll with the new Chatbox
+        return poll
 
     def get_user(self, obj):
         return obj.creator.username
