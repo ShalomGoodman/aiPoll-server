@@ -28,7 +28,7 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 class CommentSerializer(serializers.ModelSerializer):
-    creator = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), write_only=True)
+    creator = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
     creator_name = serializers.CharField(source='creator.username', read_only=True)
 
     class Meta:
