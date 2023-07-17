@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+import uuid
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -47,7 +48,7 @@ class Poll(models.Model):
     def get_percentage(self):
         total_votes = self.get_total_votes()
         if total_votes == 0:
-            return 0
+            return [0, 0]
         else:
             response = [
                 round(self.option_a_votes / total_votes * 100),

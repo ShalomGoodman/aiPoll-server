@@ -8,6 +8,7 @@ from rest_framework.status import HTTP_200_OK
 from .models import Poll, Comment, Chatbox
 from .serializers import PollSerializer, CommentSerializer, ChatboxSerializer, UserSerializer
 from rest_framework.decorators import action
+from django.db.models import F
 
 class UserCreate(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -53,23 +54,28 @@ class PollViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
 
-        for instance in queryset:
+        # Apply custom ordering based on deadline
+        ordered_queryset = queryset.order_by(F('deadline').asc(nulls_last=True))
+        print(ordered_queryset)
+
+        # Update winner and voting status for each instance
+        for instance in ordered_queryset:
             instance.update_winner()
             instance.update_voting_status()
 
-        page = self.paginate_queryset(queryset)
+        page = self.paginate_queryset(ordered_queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(ordered_queryset, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
     def vote(self, request, pk=None):
         poll = self.get_object()
         option = request.data.get('option')
-        if poll.voting_status == 'closed' or timezone.now() >= poll.deadline or poll.creator == request.user:
+        if poll.voting_status == 'closed':
             return Response({'detail': 'You cannot vote.'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             if option == 'a':
@@ -108,6 +114,7 @@ class ChatboxViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
         comments = instance.comments.all()
+        # pk = self.kwargs.get('pk')
         serializer = CommentSerializer(comments, many=True)
         return Response(serializer.data)
 
