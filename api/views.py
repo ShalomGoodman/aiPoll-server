@@ -55,7 +55,7 @@ class PollViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
 
         # Apply custom ordering based on deadline
-        ordered_queryset = queryset.order_by(F('deadline').asc(nulls_last=True))
+        ordered_queryset = queryset.order_by(F('deadline').desc(nulls_last=True))
         print(ordered_queryset)
 
         # Update winner and voting status for each instance
